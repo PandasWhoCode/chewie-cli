@@ -1,0 +1,7 @@
+.idea
+bin/
+dist/
+chewie/dcocheck
+chewie/coverage.out
+chewie/coverage.html
+ai.local

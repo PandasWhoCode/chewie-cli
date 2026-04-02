@@ -1,0 +1,91 @@
+version: '0.0.1'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build the chewie-cli binary
+    dir: chewie
+    cmds:
+      - go build -o ../bin/chewie ./cmd/chewie
+
+  test:
+    desc: Run all tests
+    dir: chewie
+    cmds:
+      - go test ./...
+
+  test-coverage:
+    desc: Run tests with coverage report
+    dir: chewie
+    cmds:
+      - go test -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - go tool cover -func=coverage.out
+
+  lint:
+    desc: Run linter
+    dir: chewie
+    cmds:
+      - go vet ./...
+
+  tidy:
+    desc: Tidy go modules
+    dir: chewie
+    cmds:
+      - go mod tidy
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf bin/ dist/ chewie/coverage.out chewie/coverage.html
+
+  build-release:
+    desc: "Build release binaries for all platforms, package as tarballs, and generate checksums. Requires VERSION variable. NOTE: Intended for CI/Linux environments (uses sha256sum)."
+    requires:
+      vars: [VERSION]
+    cmds:
+      - mkdir -p dist
+      - |
+          set -e
+          cd chewie
+          GOOS=linux  GOARCH=amd64 go build -ldflags="-s -w -X main.version={{.VERSION}}" -o ../dist/chewie ./cmd/chewie
+          (cd ../dist && tar -czf chewie-linux-amd64.tar.gz  chewie && rm chewie)
+          GOOS=linux  GOARCH=arm64 go build -ldflags="-s -w -X main.version={{.VERSION}}" -o ../dist/chewie ./cmd/chewie
+          (cd ../dist && tar -czf chewie-linux-arm64.tar.gz  chewie && rm chewie)
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X main.version={{.VERSION}}" -o ../dist/chewie ./cmd/chewie
+          (cd ../dist && tar -czf chewie-darwin-amd64.tar.gz chewie && rm chewie)
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X main.version={{.VERSION}}" -o ../dist/chewie ./cmd/chewie
+          (cd ../dist && tar -czf chewie-darwin-arm64.tar.gz chewie && rm chewie)
+          cd ../dist && sha256sum chewie-*.tar.gz > checksums.txt
+
+  update-formula:
+    desc: "Update Homebrew formula in the checked-out homebrew-tools tap. Requires VERSION and TAG variables. NOTE: Intended for CI/Linux environments (uses sha256sum and sed -i). Expects homebrew-tools/ to be checked out in the working directory."
+    requires:
+      vars: [VERSION, TAG]
+    cmds:
+      - |
+          set -e
+          DARWIN_AMD64_SHA=$(sha256sum dist/chewie-darwin-amd64.tar.gz | awk '{print $1}')
+          DARWIN_ARM64_SHA=$(sha256sum dist/chewie-darwin-arm64.tar.gz | awk '{print $1}')
+          LINUX_AMD64_SHA=$(sha256sum  dist/chewie-linux-amd64.tar.gz  | awk '{print $1}')
+          LINUX_ARM64_SHA=$(sha256sum  dist/chewie-linux-arm64.tar.gz  | awk '{print $1}')
+          cp Formula/chewie.rb homebrew-tools/Formula/chewie.rb
+          sed -i "s/version \"[^\"]*\"/version \"{{.VERSION}}\"/"                                    homebrew-tools/Formula/chewie.rb
+          sed -i "s/sha256 \"[^\"]*\" # darwin-arm64/sha256 \"${DARWIN_ARM64_SHA}\" # darwin-arm64/" homebrew-tools/Formula/chewie.rb
+          sed -i "s/sha256 \"[^\"]*\" # darwin-amd64/sha256 \"${DARWIN_AMD64_SHA}\" # darwin-amd64/" homebrew-tools/Formula/chewie.rb
+          sed -i "s/sha256 \"[^\"]*\" # linux-arm64/sha256 \"${LINUX_ARM64_SHA}\" # linux-arm64/"   homebrew-tools/Formula/chewie.rb
+          sed -i "s/sha256 \"[^\"]*\" # linux-amd64/sha256 \"${LINUX_AMD64_SHA}\" # linux-amd64/"   homebrew-tools/Formula/chewie.rb
+
+  build-all:
+    desc: Build for all platforms (development build, no version injection)
+    dir: chewie
+    cmds:
+      - GOOS=linux  GOARCH=amd64 go build -o ../dist/chewie-linux-amd64  ./cmd/chewie
+      - GOOS=linux  GOARCH=arm64 go build -o ../dist/chewie-linux-arm64  ./cmd/chewie
+      - GOOS=darwin GOARCH=amd64 go build -o ../dist/chewie-darwin-amd64 ./cmd/chewie
+      - GOOS=darwin GOARCH=arm64 go build -o ../dist/chewie-darwin-arm64 ./cmd/chewie
+

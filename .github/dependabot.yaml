@@ -1,0 +1,31 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 2
+    assignees:
+      - "pandas-who-code-sa"
+    commit-message:
+      - prefix: "deps"
+      - include: "scope"
+    labels:
+      - "dependabot"
+      - "go"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 2
+    assignees:
+      - "pandas-who-code-sa"
+    commit-message:
+      - prefix: "ci"
+      - include: "scope"
+    labels:
+      - "dependabot"
+      - "github-actions"
+
