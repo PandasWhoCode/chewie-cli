@@ -1,4 +1,4 @@
-version: '0.0.1'
+version: '3'
 
 tasks:
   default:
@@ -88,4 +88,3 @@ tasks:
       - GOOS=linux  GOARCH=arm64 go build -o ../dist/chewie-linux-arm64  ./cmd/chewie
       - GOOS=darwin GOARCH=amd64 go build -o ../dist/chewie-darwin-amd64 ./cmd/chewie
       - GOOS=darwin GOARCH=arm64 go build -o ../dist/chewie-darwin-arm64 ./cmd/chewie
-
