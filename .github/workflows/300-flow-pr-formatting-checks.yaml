@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-name: '300: [FLOW] PR Formatting Checks'
+name: "300: [FLOW] PR Formatting Checks"
 on:
   pull_request_target:
     types:

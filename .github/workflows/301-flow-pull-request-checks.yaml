@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-name: '301: [FLOW] PR Checks'
+name: "301: [FLOW] PR Checks"
 on:
   pull_request:
     branches:
